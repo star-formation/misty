@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+	<title>CRT ftw</title>
+	<!-- BabylonJS 4.0.3 graphics engine: https://www.babylonjs.com/ -->
+	<script src="deps/babylon-4.0.3.js"></script>
+	<script src="babylonjs-4.0.3.loaders.min.js"</script>
+	<!-- PEP 0.4.3 (Pointer Events Polyfill) https://github.com/jquery/PEP -->
+	<script src="deps/pep-0.4.3.js"></script>
+	<style>
+	  html, body {
+		  overflow: hidden;
+		  width: 100%;
+		  height: 100%;
+		  margin: 0;
+		  padding: 0;
+	  }
+
+	  #renderCanvas {
+		  width: 100%;
+		  height: 100%;
+		  touch-action: none;
+	  }
+	</style>
+	<script>
+	  function log(str) {
+		  var div = document.getElementById("log");
+		  var newDiv = document.createElement("div");
+		  newDiv.innerHTML = "<br>" + str;
+
+		  while (newDiv.firstChild) {
+			  div.appendChild(newDiv.firstChild);
+		  }
+	  }
+	  // WebSocket
+	  function startWS() {
+		  fr = new FileReader
+		  fr.onload = function () {
+			  log(fr.result);
+		  }
+		  try {
+			  ws = new WebSocket("ws://localhost:8081", "client0.argonavis.io");
+		  } catch (error) {
+			  document.getElementById("log").innerHTML = "error";
+		  }
+		  document.getElementById("log").innerHTML = "readyState: " + ws.readyState
+
+		  ws.onerror = function(e) { log("OnError "); };
+		  ws.onclose = function(e) { log("OnClose code: " + e.code + " reason: " + e.reason); };
+
+		  ws.onopen = function() {
+			  log("OnOpen protocol: " + ws.protocol);
+			  buf = new Uint16Array(1);
+			  buf[0] = 900;
+			  ws.send(buf);
+		  };
+
+		  ws.onmessage = function(msg) {
+			  log("OnMessage:");
+			  fr.readAsText(msg.data);
+			  // TODO: JSON decode
+		  }
+	  }
+
+
+	</script>
+  </head>
+  <body>
+	<!--
+	<h2>Argo Navis dev/test web client55</h2>
+	<button type="button" onclick="startWS()">Start WebSocket</button>
+	<p id="log"></p>
+	-->
+	<canvas id="renderCanvas"></canvas>
+	<script>
+	  window.addEventListener('DOMContentLoaded', function() {
+		  // Babylon Scene
+		  var canvas = document.getElementById('renderCanvas');
+		  var engine = new BABYLON.Engine(canvas, true);
+
+		  var createScene = function() {
+			  var scene = new BABYLON.Scene(engine);
+
+			  var camera = new BABYLON.ArcRotateCamera('camera', 0, 0, 10, new BABYLON.Vector3(0, 0, 0), scene);
+			  camera.setTarget(BABYLON.Vector3.Zero());
+			  camera.attachControl(canvas, false);
+
+			  var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
+
+			  var sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:2}, scene);
+			  sphere.position.y = 1;
+
+			  var ground = BABYLON.MeshBuilder.CreateGround('ground1', {height:6, width:6, subdivisions:2}, scene);
+
+			  return scene;
+		  }
+
+		  var scene = createScene();
+		  engine.runRenderLoop(function() {
+			  scene.render();
+		  });
+
+		  window.addEventListener('resize', function() {
+			  engine.resize();
+		  });
+	  });
+	</script>
+  </body>
+</html>

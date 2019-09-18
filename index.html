@@ -81,14 +81,17 @@
 		  var createScene = function() {
 			  var scene = new BABYLON.Scene(engine);
 
-			  var camera = new BABYLON.ArcRotateCamera('camera', 0, 0, 6, new BABYLON.Vector3(0, 0, 0), scene);
+			  target = new BABYLON.Vector3(-8000, 8000, -1000);
+			  var camera = new BABYLON.ArcRotateCamera('camera', Math.PI*1.13, Math.PI*0.28, 10, target, scene);
 			  camera.lowerRadiusLimit = 4;
 			  camera.upperRadiusLimit = 128;
-			  target = new BABYLON.Vector3(-8000, 8000, -1000);
-			  camera.setTarget(target);
 			  camera.attachControl(canvas, false);
+			  camera.wheelPrecision = 6;
+			  //camera.setMatUp();
 
-			  var light = new BABYLON.DirectionalLight('light1', new BABYLON.Vector3(100000,-200000,-200000), scene);
+			  var light = new BABYLON.DirectionalLight('light1', new BABYLON.Vector3(-100000,-200000,-100000), scene);
+			  light.intensity = 2.0;
+			  //light.lightmapMode = BABYLON.Light.LIGHTMAP_SHADOWSONLY;
 
 			  var earth = BABYLON.MeshBuilder.CreateSphere('earth', {segments:16, diameter:10000}, scene);
 			  var rock = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:1}, scene);
@@ -101,7 +104,12 @@
 			  rock.renderingGroupId = 1;
 
 			  var earthMaterial = new BABYLON.StandardMaterial("earthMaterial", scene);
-			  earthMaterial.diffuseTexture = new BABYLON.Texture("http://localhost:8081/assets/earth.jpg", scene);
+
+			  earthMaterial.diffuseTexture = new BABYLON.Texture("http://localhost:8081/assets/8k_earth_daymap.jpg", scene);
+			  //earthMaterial.specularTexture = new BABYLON.Texture("http://localhost:8081/assets/8k_earth_specular_map.tif", scene);
+			  earthMaterial.emissiveTexture = new BABYLON.Texture("http://localhost:8081/assets/8k_earth_nightmap.jpg", scene);
+			  //earthMaterial.ambientTexture = new BABYLON.Texture("http://localhost:8081/assets/8k_earth_daymap.jpg", scene);
+			  earthMaterial.specularColor = new BABYLON.Color3(0,0,0);
 
 			  earth.material = earthMaterial;
 

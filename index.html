@@ -60,6 +60,7 @@
 			  log("OnMessage:");
 			  fr.readAsText(msg.data);
 			  // TODO: JSON decode
+			  // TODO: update babylon scene with global game state
 		  }
 	  }
 
@@ -78,40 +79,60 @@
 		  var canvas = document.getElementById('renderCanvas');
 		  var engine = new BABYLON.Engine(canvas, true);
 
+		  // TODO: load scene objects from server state
 		  var createScene = function() {
 			  var scene = new BABYLON.Scene(engine);
-
-			  target = new BABYLON.Vector3(-8000, 8000, -1000);
-			  var camera = new BABYLON.ArcRotateCamera('camera', Math.PI*1.13, Math.PI*0.28, 10, target, scene);
-			  camera.lowerRadiusLimit = 4;
-			  camera.upperRadiusLimit = 128;
-			  camera.attachControl(canvas, false);
-			  camera.wheelPrecision = 6;
-			  //camera.setMatUp();
 
 			  var light = new BABYLON.DirectionalLight('light1', new BABYLON.Vector3(-100000,-200000,-100000), scene);
 			  light.intensity = 2.0;
 			  //light.lightmapMode = BABYLON.Light.LIGHTMAP_SHADOWSONLY;
 
-			  var earth = BABYLON.MeshBuilder.CreateSphere('earth', {segments:16, diameter:10000}, scene);
-			  var rock = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:1}, scene);
-			  earth.position.y = 1;
-			  earth.addRotation(Math.PI, 0, 0).addRotation(0, 0, 0);//.addRotation(0, 0, Math.PI/4);
-
-			  rock.setPositionWithLocalVector(target);
+			  var earth = BABYLON.MeshBuilder.CreateSphere('earth', {segments:16, diameter:12742}, scene);
+			  var moon = BABYLON.MeshBuilder.CreateSphere('moon', {segments:16, diameter:470}, scene);
+			  var ship = BABYLON.MeshBuilder.CreateBox('ship', {height: 0.1, width: 0.2, depth: 0.6}, scene);
 
 			  earth.renderingGroupId = 1;
-			  rock.renderingGroupId = 1;
+			  moon.renderingGroupId = 1;
+			  ship.renderingGroupId = 1;
+
+			  // Earth pos is (0,0,0)
+			  earth.addRotation(Math.PI, 0, 0).addRotation(0, 0, 0);//.addRotation(0, 0, Math.PI/4);
+
+			  moonPos = new BABYLON.Vector3(-8000, 8000, -1000);
+			  moon.setPositionWithLocalVector(moonPos);
+
+			  shipPos = moonPos.add(new BABYLON.Vector3(-100,400,-100));
+			  ship.setPositionWithLocalVector(shipPos);
 
 			  var earthMaterial = new BABYLON.StandardMaterial("earthMaterial", scene);
-
 			  earthMaterial.diffuseTexture = new BABYLON.Texture("http://localhost:8081/assets/8k_earth_daymap.jpg", scene);
 			  //earthMaterial.specularTexture = new BABYLON.Texture("http://localhost:8081/assets/8k_earth_specular_map.tif", scene);
 			  earthMaterial.emissiveTexture = new BABYLON.Texture("http://localhost:8081/assets/8k_earth_nightmap.jpg", scene);
 			  //earthMaterial.ambientTexture = new BABYLON.Texture("http://localhost:8081/assets/8k_earth_daymap.jpg", scene);
 			  earthMaterial.specularColor = new BABYLON.Color3(0,0,0);
-
 			  earth.material = earthMaterial;
+
+			  var moonMaterial = new BABYLON.StandardMaterial("moonMaterial", scene);
+			  moonMaterial.diffuseTexture = new BABYLON.Texture("http://localhost:8081/assets/4k_ceres_fictional.jpg", scene);
+			  moonMaterial.specularColor = new BABYLON.Color3(0,0,0);
+			  moon.material = moonMaterial;
+
+			  moon.addRotation(Math.PI/2, 0, 0).addRotation(0, 0, 0);//.addRotation(0, 0, Math.PI/4);
+
+			  var shipMaterial = new BABYLON.StandardMaterial("shipMaterial", scene);
+			  shipMaterial.diffuseTexture = new BABYLON.Texture("http://localhost:8081/assets/sci-fi-texture.jpg", scene);
+			  shipMaterial.emissiveTexture = new BABYLON.Texture("http://localhost:8081/assets/sci-fi-texture2.jpg", scene);
+			  shipMaterial.specularColor = new BABYLON.Color3(0,0,0);
+			  ship.material = shipMaterial;
+
+			  //
+
+			  var camera = new BABYLON.ArcRotateCamera('camera', Math.PI*1.13, Math.PI*0.28, 2, shipPos, scene);
+			  camera.lowerRadiusLimit = 1.5;
+			  camera.upperRadiusLimit = 100;
+			  camera.attachControl(canvas, false);
+			  camera.wheelPrecision = 10;
+			  //camera.setMatUp();
 
 			  var spaceTexture = new BABYLON.CubeTexture("http://localhost:8081/assets/space/space", scene);
 			  scene.createDefaultSkybox(spaceTexture, false, 10000);

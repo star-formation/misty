@@ -81,19 +81,29 @@
 		  var createScene = function() {
 			  var scene = new BABYLON.Scene(engine);
 
-			  var camera = new BABYLON.ArcRotateCamera('camera', 0, 0, 10, new BABYLON.Vector3(0, 0, 0), scene);
-			  camera.setTarget(BABYLON.Vector3.Zero());
+			  var camera = new BABYLON.ArcRotateCamera('camera', 0, 0, 6, new BABYLON.Vector3(0, 0, 0), scene);
+			  camera.lowerRadiusLimit = 4;
+			  camera.upperRadiusLimit = 128;
+			  target = new BABYLON.Vector3(-8000, 8000, -1000);
+			  camera.setTarget(target);
 			  camera.attachControl(canvas, false);
 
-			  var light = new BABYLON.DirectionalLight('light1', new BABYLON.Vector3(1,2,2), scene);
+			  var light = new BABYLON.DirectionalLight('light1', new BABYLON.Vector3(100000,-200000,-200000), scene);
 
-			  var s1 = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:1}, scene);
-			  var s2 = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:1}, scene);
-			  s1.position.y = 1;
-			  s2.position.y = 1;
-			  s2.position.x = 2;
-			  s1.renderingGroupId = 1;
-			  s2.renderingGroupId = 1;
+			  var earth = BABYLON.MeshBuilder.CreateSphere('earth', {segments:16, diameter:10000}, scene);
+			  var rock = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:1}, scene);
+			  earth.position.y = 1;
+			  earth.addRotation(Math.PI, 0, 0).addRotation(0, 0, 0);//.addRotation(0, 0, Math.PI/4);
+
+			  rock.setPositionWithLocalVector(target);
+
+			  earth.renderingGroupId = 1;
+			  rock.renderingGroupId = 1;
+
+			  var earthMaterial = new BABYLON.StandardMaterial("earthMaterial", scene);
+			  earthMaterial.diffuseTexture = new BABYLON.Texture("http://localhost:8081/assets/earth.jpg", scene);
+
+			  earth.material = earthMaterial;
 
 			  var spaceTexture = new BABYLON.CubeTexture("http://localhost:8081/assets/space/space", scene);
 			  scene.createDefaultSkybox(spaceTexture, false, 10000);

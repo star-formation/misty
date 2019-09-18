@@ -5,7 +5,7 @@
 	<title>Misty</title>
 	<!-- BabylonJS 4.0.3 graphics engine: https://www.babylonjs.com/ -->
 	<script src="deps/babylon-4.0.3.js"></script>
-	<script src="babylonjs-4.0.3.loaders.min.js"</script>
+	<script src="deps/babylonjs-4.0.3.loaders.min.js"</script>
 	<!-- PEP 0.4.3 (Pointer Events Polyfill) https://github.com/jquery/PEP -->
 	<script src="deps/pep-0.4.3.js"></script>
 	<style>
@@ -63,7 +63,6 @@
 		  }
 	  }
 
-
 	</script>
   </head>
   <body>
@@ -86,12 +85,18 @@
 			  camera.setTarget(BABYLON.Vector3.Zero());
 			  camera.attachControl(canvas, false);
 
-			  var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
+			  var light = new BABYLON.DirectionalLight('light1', new BABYLON.Vector3(1,2,2), scene);
 
-			  var sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:2}, scene);
-			  sphere.position.y = 1;
+			  var s1 = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:1}, scene);
+			  var s2 = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:1}, scene);
+			  s1.position.y = 1;
+			  s2.position.y = 1;
+			  s2.position.x = 2;
+			  s1.renderingGroupId = 1;
+			  s2.renderingGroupId = 1;
 
-			  var ground = BABYLON.MeshBuilder.CreateGround('ground1', {height:6, width:6, subdivisions:2}, scene);
+			  var spaceTexture = new BABYLON.CubeTexture("http://localhost:8081/assets/space/space", scene);
+			  scene.createDefaultSkybox(spaceTexture, false, 10000);
 
 			  return scene;
 		  }

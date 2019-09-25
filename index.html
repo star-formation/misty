@@ -36,6 +36,7 @@
 	<script>
 	  var camera;
 	  var ship, moon;
+	  var shipVel = new BABYLON.Vector3(0, 0, 0);
 	  window.addEventListener('DOMContentLoaded', function() {
 		  // Babylon Scene
 		  var canvas = document.getElementById('renderCanvas');
@@ -51,8 +52,8 @@
 			  earthPos = new BABYLON.Vector3(8000, 6000, -1000);
 			  moonPos = new BABYLON.Vector3(0, 0, 0);
 			  shipPos = moonPos.add(new BABYLON.Vector3(-200, 600,-200));
-			  var earth = BABYLON.MeshBuilder.CreateSphere('earth', {segments:16, diameter:12742}, scene);
-			  moon = BABYLON.MeshBuilder.CreateSphere('moon', {segments:16, diameter:940}, scene);
+			  var earth = BABYLON.MeshBuilder.CreateSphere('earth', {segments:64, diameter:12742}, scene);
+			  moon = BABYLON.MeshBuilder.CreateSphere('moon', {segments:64, diameter:940}, scene);
 			  ship = BABYLON.MeshBuilder.CreateBox('ship', {height: 0.1, width: 0.2, depth: 0.6}, scene);
 
 			  earth.renderingGroupId = 1;
@@ -87,14 +88,23 @@
 			  shipMaterial.specularColor = new BABYLON.Color3(0,0,0);
 			  ship.material = shipMaterial;
 
-			  //
-
 			  camera = new BABYLON.ArcRotateCamera('camera', Math.PI*1.13, Math.PI*0.28, 2, shipPos, scene);
 			  camera.lowerRadiusLimit = 1.5;
 			  camera.upperRadiusLimit = 100;
-			  camera.attachControl(canvas, false);
 			  camera.wheelPrecision = 10;
 			  //camera.setMatUp();
+
+			  /*
+			  camera = new BABYLON.FollowCamera('camera', new BABYLON.Vector3(0, 10, -10), scene);
+			  camera.radius = 2;
+			  camera.heightOffset = 1;
+			  camera.rotationOffset = 0;
+			  camera.cameraAcceleration = 0.01;
+			  camera.maxCameraSpeed = 100;
+			  camera.lockedTarget = ship;
+			  */
+
+			  camera.attachControl(canvas, false);
 
 			  var spaceTexture = new BABYLON.CubeTexture("http://localhost:8082/assets/space/space", scene);
 			  scene.createDefaultSkybox(spaceTexture, false, 10000);
@@ -103,7 +113,26 @@
 		  }
 
 		  var scene = createScene();
+
+		  var startTime = new Date().getTime();
+		  var last = startTime;
+
 		  engine.runRenderLoop(function() {
+			  now = new Date().getTime();
+			  elapsed = now - last;
+			  last = now;
+
+			  s = elapsed / 1000;
+			  // TODO: simple interpolation of position and orientation from velocity
+			  // and angular velocity.  exact sync every X seconds
+
+			  //console.log("elapsed: " + elapsed + " (" + seconds + ") seconds");
+			  d = shipVel.multiply(new BABYLON.Vector3(s, s, s));
+			  //console.log("vel: " + shipVel + " pos: " + shipPos + " d: " + d);
+
+			  shipPos = shipPos.add(d);
+			  //ship.setPositionWithLocalVector(shipPos);
+			  camera.setTarget(shipPos);
 			  scene.render();
 		  });
 
@@ -114,17 +143,32 @@
 		  startWebSocket();
 	  });
 
+	  var ws;
 	  function startWebSocket() {
 		  fr = new FileReader
 		  fr.onload = function () {
 			  console.log(fr.result);
 			  j = JSON.parse(fr.result);
 			  // TODO: map generic entities to babylon objects
-			  pos = j[0]["Ents"][0].Pos;
-			  console.log("updating ship pos: " + pos);
-			  v3 = new BABYLON.Vector3(pos.X, pos.Y, pos.Z);
-			  ship.setPositionWithLocalVector(v3);
-			  camera.setTarget(v3);
+			  vel = j[0]["Ents"][0].Vel;
+			  //console.log("updating ship pos: " + pos);
+			  shipVel = new BABYLON.Vector3(vel.X/1000, vel.Y/1000, vel.Z/1000);
+
+			  o = j[0]["Ents"][0].Ori;
+			  q = new BABYLON.Quaternion(o.I, o.J, o.K, o.R);
+			  ea = q.toEulerAngles();
+			  console.log("WTF " + q.toString());
+			  console.log("WTF " + ea.toString());
+			  //console.log("Euler Angles: x: " + ea.x + " y:" + ea.y + " z:" + ea.z);
+			  //ship.setPivotPoint(ship.position);
+			  //ship.addRotation(ea.x, ea.y, ea.z);
+
+			  //ship.addRotation(Math.PI/100, 0, 0);
+			  ship.addRotation(ea.x, ea.y, ea.z);
+
+			  //ship.rotationQuaternion = q;
+			  //ship.rotate(new BABYLON.Vector3(-1, 3, -10), 7 * Math.PI / 12, BABYLON.Space.LOCAL);
+
 		  }
 		  try {
 			  ws = new WebSocket("ws://localhost:8081", "client0.argonavis.io");
@@ -140,13 +184,13 @@
 
 		  ws.onopen = function() {
 			  console.log("OnOpen protocol: " + ws.protocol);
-			  buf = new Uint16Array(1);
-			  buf[0] = 900;
-			  ws.send(buf);
+			  //buf = new Uint16Array(1);
+			  //buf[0] = 900;
+			  //ws.send(buf);
 		  };
 
 		  ws.onmessage = function(msg) {
-			  console.log("OnMessage:");
+			  //console.log("OnMessage:");
 			  fr.readAsText(msg.data);
 			  // TODO: JSON decode
 			  // TODO: update babylon scene with global game state
@@ -162,6 +206,16 @@
 			  div.appendChild(newDiv.firstChild);
 		  }
 	  }
+
+	  document.addEventListener('keydown', function(event) {
+		  switch(event.key) {
+		  case "s":
+			  obj = {"action": "rotate", "entity": "42", "params": {"duration": 10.0, "torque": {"x":500.0,"y":200.0,"z":20.0}}}
+			  ws.send(JSON.stringify(obj))
+			  break;
+		  default:
+		  }
+	  });
 	</script>
   </body>
 </html>

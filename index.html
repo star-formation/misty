@@ -51,14 +51,15 @@
 
 			  earthPos = new BABYLON.Vector3(8000, 6000, -1000);
 			  moonPos = new BABYLON.Vector3(0, 0, 0);
-			  shipPos = moonPos.add(new BABYLON.Vector3(-200, 600,-200));
-			  shipPos2 = shipPos.add(new BABYLON.Vector3(2,0,2));
 
 			  shipRot = new BABYLON.Vector3(0, 0, 0);
 			  var earth = BABYLON.MeshBuilder.CreateSphere('earth', {segments:64, diameter:12742}, scene);
 			  moon = BABYLON.MeshBuilder.CreateSphere('moon', {segments:64, diameter:940}, scene);
 			  ship = BABYLON.MeshBuilder.CreateBox('ship', {height: 0.1, width: 0.2, depth: 0.6}, scene);
 			  ship2 = BABYLON.MeshBuilder.CreateBox('ship2', {height: 0.4, width: 0.4, depth: 0.4}, scene);
+
+			  ship.position = moonPos.add(new BABYLON.Vector3(-200, 600,-200));
+			  ship2.position = ship.position.add(new BABYLON.Vector3(2,0,2));
 
 			  earth.renderingGroupId = 1;
 			  moon.renderingGroupId = 1;
@@ -70,8 +71,6 @@
 
 			  earth.setPositionWithLocalVector(earthPos);
 			  moon.setPositionWithLocalVector(moonPos);
-			  ship.setPositionWithLocalVector(shipPos);
-			  ship2.setPositionWithLocalVector(shipPos2);
 
 			  var earthMaterial = new BABYLON.StandardMaterial("earthMaterial", scene);
 			  earthMaterial.diffuseTexture = new BABYLON.Texture("http://localhost:8082/assets/8k_earth_daymap.jpg", scene);
@@ -96,22 +95,10 @@
 
 			  ship2.material = shipMaterial
 
-			  cameraPos = shipPos.clone()
-			  camera = new BABYLON.ArcRotateCamera('camera', Math.PI*1.13, Math.PI*0.28, 2, cameraPos, scene);
+			  camera = new BABYLON.ArcRotateCamera('camera', Math.PI*1.13, Math.PI*0.28, 2, ship.position, scene);
 			  camera.lowerRadiusLimit = 1.4;
 			  camera.upperRadiusLimit = 100;
 			  camera.wheelPrecision = 10;
-			  //camera.setMatUp();
-
-			  /*
-			  camera = new BABYLON.FollowCamera('camera', new BABYLON.Vector3(0, 10, -10), scene);
-			  camera.radius = 2;
-			  camera.heightOffset = 1;
-			  camera.rotationOffset = 0;
-			  camera.cameraAcceleration = 0.01;
-			  camera.maxCameraSpeed = 100;
-			  camera.lockedTarget = ship;
-			  */
 
 			  camera.attachControl(canvas, false);
 
@@ -133,6 +120,7 @@
 
 			  s = elapsed / 1000;
 
+			  /*
 			  posDelta = shipVel.multiply(new BABYLON.Vector3(s, s, s));
 			  shipPos = shipPos.add(posDelta);
 			  ship.position = shipPos;
@@ -141,10 +129,12 @@
 			  //console.log("FUNK: oriDelta: " + oriDelta)
 			  ship.addRotation(oriDelta.x, oriDelta.y, oriDelta.z);
 
+			  */
 
-			  t = shipPos.clone();
-			  camera.setTarget(t);
+			  //t = shipPos.clone();
+
 			  scene.render();
+
 		  });
 
 		  window.addEventListener('resize', function() {
@@ -160,11 +150,16 @@
 		  fr.onload = function () {
 			  console.log(fr.result);
 			  j = JSON.parse(fr.result);
-			  vel = j[0]["Ents"][0].Vel;
-			  rot = j[0]["Ents"][0].Rot;
+			  pos = j[0]["Ents"][0].Pos;
+			  ori = j[0]["Ents"][0].Ori;
 
-			  shipVel = new BABYLON.Vector3(vel.X/1000, vel.Y/1000, vel.Z/1000);
-			  shipRot = new BABYLON.Vector3(rot.X, rot.Y, rot.Z);
+			  ship.position.x = pos.X;
+			  ship.position.y = pos.Y;
+			  ship.position.z = pos.Z;
+			  ship.rotationQuaternion = new BABYLON.Quaternion(ori.I, ori.J, ori.K, ori.R);
+
+			  //shipVel = new BABYLON.Vector3(vel.X/1000, vel.Y/1000, vel.Z/1000);
+			  //shipRot = new BABYLON.Vector3(rot.X, rot.Y, rot.Z);
 			  //console.log("FUNK: shipVel: " + shipVel)
 			  console.log("FUNK: shipRot: " + shipRot)
 
@@ -208,7 +203,7 @@
 
 	  document.addEventListener('keydown', function(event) {
 		  if (event.key == " ") {
-			  force = 50000.0;
+			  force = 50.0;
 			  obj = {"action": "engine", "entity": "42", "params": {"duration": 1.0, "force": force}};
 			  ws.send(JSON.stringify(obj));
 		  }
@@ -223,10 +218,10 @@
 				  torque.x = -5000.0;
 				  break;
 			  case "a":
-				  torque.y = 5000.0;
+				  torque.y = -5000.0;
 				  break;
 			  case "d":
-				  torque.y = -5000.0;
+				  torque.y = 5000.0;
 				  break;
 			  case "q":
 				  torque.z = 5000.0;
